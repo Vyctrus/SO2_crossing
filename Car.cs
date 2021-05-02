@@ -48,6 +48,7 @@ namespace crossing1
         private int next_pos_X = 0;
         private int next_pos_Y = 0;
         crossing1.Program program;
+        crossing1.Road road;
         public void setThread(Thread passed)
         {
             threadAction = passed;
@@ -68,9 +69,10 @@ namespace crossing1
         {
             return pos_Y;
         }
-        public Car(CarPos carPos, CarDirection carDirection, Program program1, char carGraphic)
+        public Car(CarPos carPos, CarDirection carDirection, char carGraphic, Program program1, Road carRoad)
         {
             program = program1;
+            road = carRoad;
             graphic = 'X';
             // switch (carPos)
             // {
@@ -95,8 +97,8 @@ namespace crossing1
             //         carRot = CarRotation.RIGHT;
             //         break;
             // }
-            pos_X = 0;
-            pos_Y = 0;
+            pos_X = 1;
+            pos_Y = 13;
             carRot = CarRotation.RIGHT;
         }
         public void ThreadProc()
@@ -109,7 +111,8 @@ namespace crossing1
                     //uwolnij pozycje
                     break;
                 }
-                tryToMove();
+                bool temp = tryToMove();
+                if (!temp) { break; }
             }
 
         }
@@ -152,10 +155,22 @@ namespace crossing1
                     break;
             }
         }
-        void tryToMove()
+        bool tryToMove()
         {
-            //bool moveFinished = false;
-            step();
+            //wykonaj ruch jeżeli możesz
+            //canmove - jeżeli wolna przestrzeń i nie obsługujesz skrzyżowania
+            if (road.straightRoad(pos_X, pos_Y))
+            {
+                step();
+            }
+            else
+            {
+                return false;
+                //obsługa skrzyżowania
+            }
+            return true;
+            //obsługa skrzyżowania
+
             // while (!moveFinished)
             // {
             // step();

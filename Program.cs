@@ -11,16 +11,12 @@ namespace crossing1
         static private bool programRunning = true;
         Mutex prun = new Mutex();
         Car myCar;
+        Road simRoad;
         static void Main(string[] args)
         {
             Program program = new Program();
             program.ProgramGUI();
             //program.notStatic();
-        }
-        void notStatic()
-        {
-            //Car mycar = new Car(CarPos.TOP, this);
-            //mycar.brumbrum();
         }
         public bool getPrun()
         {
@@ -39,7 +35,7 @@ namespace crossing1
             //     newCarThread.Start();
             //     carThreads[i].setThread(newCarThread);
             // }
-            myCar = new Car(CarPos.TOP, CarDirection.FORWARD, this, 'G');
+            myCar = new Car(CarPos.TOP, CarDirection.FORWARD, 'G', this, simRoad);
             Thread newCarThread = new Thread(new ThreadStart(myCar.ThreadProc));
             newCarThread.Start();
             myCar.setThread(newCarThread);
@@ -47,6 +43,7 @@ namespace crossing1
 
         public void ProgramGUI()
         {
+            simRoad = new Road();
             StartThreads();
             Application.Init();
             var top = Application.Top;
