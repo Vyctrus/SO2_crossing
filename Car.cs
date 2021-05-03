@@ -29,19 +29,17 @@ namespace crossing1
     class Car
     {
         Thread threadAction;
+        private bool carExists = true;
+        private Mutex carExistsMutex = new Mutex();
         private int pos_X = 0;
         private int pos_Y = 0;
+        private Mutex positionMutex;
         private int speed = 500; //?wspieranie predkosci?
-
-        //private int startPos = 0;//pozycja z ktorej auto zacyzna
-        //private int endPos = 1;//pozycja w której auto ma kończyć
-        private int start_pos_X = 0;
-        private int start_pos_Y = 0;
 
         private int end_pos_X = 30;
         private int end_pos_Y = 0;
 
-        private char graphic = 'A';
+        private String graphic = "A";
         private CarRotation carRot; // :D
 
         //pozycja którą chce następnie zająć auto
@@ -61,6 +59,7 @@ namespace crossing1
         {
             return graphic.ToString();
         }
+        //use only with lock&unlock functionS!
         public int getPosX()
         {
             return pos_X;
@@ -69,37 +68,55 @@ namespace crossing1
         {
             return pos_Y;
         }
-        public Car(CarPos carPos, CarDirection carDirection, char carGraphic, Program program1, Road carRoad)
+        public void lockPosition()
+        {
+            positionMutex.WaitOne();
+        }
+        public void unlockPosition()
+        {
+            positionMutex.ReleaseMutex();
+        }
+        public Car(CarPos carPos, CarDirection carDirection, String carGraphic, Program program1, Road carRoad)
         {
             program = program1;
             road = carRoad;
-            graphic = 'X';
-            // switch (carPos)
-            // {
-            //     case CarPos.TOP:
-            //         pos_X = 0;
-            //         pos_Y = 0;
-            //         carRot = CarRotation.DOWN;
-            //         break;
-            //     case CarPos.RIGHT:
-            //         pos_X = 0;
-            //         pos_Y = 0;
-            //         carRot = CarRotation.LEFT;
-            //         break;
-            //     case CarPos.BOTTOM:
-            //         pos_X = 0;
-            //         pos_Y = 0;
-            //         carRot = CarRotation.UP;
-            //         break;
-            //     case CarPos.LEFT:
-            //         pos_X = 0;
-            //         pos_Y = 0;
-            //         carRot = CarRotation.RIGHT;
-            //         break;
-            // }
-            pos_X = 1;
-            pos_Y = 13;
-            carRot = CarRotation.RIGHT;
+
+            //pozniej zalezne od kierunku
+            graphic = carGraphic;
+            positionMutex = new Mutex();
+            //
+            lockPosition();
+            //carPos = CarPos.TOP;
+            pos_X = road.getStartPointX(carPos);
+            pos_Y = road.getStartPointY(carPos);
+
+            unlockPosition();
+            //ustawienie poczatkowej rotacji
+            switch (carPos)
+            {
+                case CarPos.TOP:
+                    carRot = CarRotation.DOWN;
+                    break;
+                case CarPos.RIGHT:
+                    carRot = CarRotation.LEFT;
+                    break;
+                case CarPos.BOTTOM:
+                    carRot = CarRotation.UP;
+                    break;
+                case CarPos.LEFT:
+                    carRot = CarRotation.RIGHT;
+                    break;
+            }
+            //test
+            //carRot = CarRotation.DOWN;
+        }
+        public bool checkIfCarExists()
+        {
+            bool safeCarExists = true;
+            carExistsMutex.WaitOne();
+            safeCarExists = carExists;
+            carExistsMutex.ReleaseMutex();
+            return safeCarExists;
         }
         public void ThreadProc()
         {
@@ -109,20 +126,28 @@ namespace crossing1
                 if (checkIfEnd())
                 {
                     //uwolnij pozycje
+                    carExistsMutex.WaitOne();
+                    carExists = false;
+                    carExistsMutex.ReleaseMutex();
                     break;
                 }
+                lockPosition();
                 bool temp = tryToMove();
+                unlockPosition();
                 if (!temp) { break; }
             }
 
         }
         public bool checkIfEnd()
         {
+            bool returnVal = false;
+            lockPosition();
             if (pos_X == end_pos_X && pos_Y == end_pos_Y)
             {
-                return true;
+                returnVal = true;
             }
-            return false;
+            unlockPosition();
+            return returnVal;
         }
 
         //jak zawracaja? w oparciu o miejsce gdzie są?
@@ -133,8 +158,6 @@ namespace crossing1
         //po wykonaniu ruchu update pozycji next_pos
         void step()
         {
-            //Pos_X -> new one
-            //Pos_Y -> new one
             switch (carRot)
             {
                 case CarRotation.UP:
