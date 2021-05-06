@@ -17,7 +17,7 @@ namespace crossing1
         //   A B x2
         //   x3  C D
         //        x4
-        int[,] crossInner = new int[,] { { 12, 12 }, { 13, 12 }, { 12, 13 }, { 13, 13 } };
+        public int[,] crossInner = new int[,] { { 12, 12 }, { 13, 12 }, { 12, 13 }, { 13, 13 } };
         //x1,x2,x3,x4
         int[,] crossOuter = new int[,] { { 12, 11 }, { 14, 12 }, { 11, 13 }, { 13, 14 } };
         bool[,] roadSpace = new bool[25, 25];
@@ -26,9 +26,21 @@ namespace crossing1
         Queue<string> characters = new Queue<string>();
         Mutex charactersMutex = new Mutex();
         int MAX_CAR_NUMBER = 10;//queue.size;
+        private int crossingCarsNumber = 0;
+        private Mutex crossingCarsNumberMutex = new Mutex();
+        private int[] hungryArray = new int[4];
+
+        public Mutex getCrossingCarsNumberMutex()
+        {
+            return crossingCarsNumberMutex;
+        }
 
         public Road()
         {
+            for (int i = 0; i < 4; i++)
+            {
+                hungryArray[i] = i;
+            }
             for (int i = 0; i < 25; i++)
             {
                 //roadSpaceMutex[i] = new Mutex[25];
@@ -40,6 +52,80 @@ namespace crossing1
                 }
             }
             loadCarCharacters();
+        }
+
+        public bool skipIfBlank(int posX, int posY)
+        {
+            int i = 0;
+            while (true)
+            {
+                if (hungryArray[i] == 3)
+                {
+                    GetRoadMutex(crossOuter[i, 0], crossOuter[i, 1]).WaitOne();
+                    bool temp = checkSpace(crossOuter[i, 0], crossOuter[i, 1]);
+                    GetRoadMutex(crossOuter[i, 0], crossOuter[i, 1]).ReleaseMutex();
+                    if (temp == true)
+                    {//temp==true car not existing bcs of free space
+                        hungryArray[0] = (hungryArray[0] + 1) % 4;
+                        hungryArray[1] = (hungryArray[1] + 1) % 4;
+                        hungryArray[2] = (hungryArray[2] + 1) % 4;
+                        hungryArray[3] = (hungryArray[3] + 1) % 4;
+                    }
+                    else
+                    {
+                        //car exists
+                        break;
+                    }
+                }
+                i = (i + 1) % 4;
+            }
+            int carOuter = 0;
+            for (int j = 0; j < 4; j++)
+            {
+                if (crossOuter[j, 0] == posX && crossOuter[j, 1] == posY)
+                {
+                    carOuter = j;
+                }
+            }
+            if (hungryArray[carOuter] == 3)
+            {
+                //jeśli obecne auto było pierwsze w kolejności ->pojedz i ustaw nową kolejkę
+                hungryArray[0] = (hungryArray[0] + 1) % 4;
+                hungryArray[1] = (hungryArray[1] + 1) % 4;
+                hungryArray[2] = (hungryArray[2] + 1) % 4;
+                hungryArray[3] = (hungryArray[3] + 1) % 4;
+                //jedz!!!
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        public int getCrossingCarsNumber()
+        {
+            return crossingCarsNumber;
+        }
+        public void setCrossingCarsNumber(int vlaue)
+        {
+            crossingCarsNumber = vlaue;
+        }
+        // public void incCrossingCarsNumber()
+        // {
+        //     crossingCarsNumber++;
+        // }
+        // public void decCrossingCarsNumber()
+        // {
+        //     crossingCarsNumber--;
+        // }
+
+        public int getQueueLength()
+        {
+            int q_length = 0;
+            charactersMutex.WaitOne();
+            q_length = characters.Count;
+            charactersMutex.ReleaseMutex();
+            return q_length;
         }
         public void pushCharacter(String str)
         {
@@ -130,10 +216,10 @@ namespace crossing1
         {
             for (int i = 0; i < 4; i++)
             {
-                if (pos_x == crossInner[i, 0] && pos_y == crossInner[i, 1])
-                {
-                    return false;
-                }
+                // if (pos_x == crossInner[i, 0] && pos_y == crossInner[i, 1])
+                // {
+                //     return false;
+                // }
                 if (pos_x == crossOuter[i, 0] && pos_y == crossOuter[i, 1])
                 {
                     return false;
@@ -141,6 +227,19 @@ namespace crossing1
             }
             return true;
         }
+
+        public bool crossingEntrance(int pos_x, int pos_y)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (pos_x == crossOuter[i, 0] && pos_y == crossOuter[i, 1])
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         //sprawdz czy podane kaordynaty sa wolne true-mozna jechac, flase- nie mozna
         //need to be in safe block of code
         // GetRoadMutex(x,y).WaitOne();

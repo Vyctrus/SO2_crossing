@@ -17,6 +17,7 @@ namespace crossing1
         Road simRoad;
         static Random rand = new Random();
         static Object randLock = new Object();
+        private SemaphoreSlim godOfRoad = new SemaphoreSlim(1);
         static void Main(string[] args)
         {
             Program program = new Program();
@@ -42,7 +43,7 @@ namespace crossing1
         private void GenerateCarsProc()
         {
             int MAX_CAR_NUMBER = simRoad.getMAX_CAR_NUMBER();
-            int CURRENT_CAR_NUMBER = 0;
+            //int CURRENT_CAR_NUMBER = 0;
             int frequency = 1000;
             int genX = 0;
             int genY = 0;
@@ -50,7 +51,8 @@ namespace crossing1
             CarDirection newCarDir = CarDirection.FORWARD;
             while (getPrun())
             {
-                if (CURRENT_CAR_NUMBER < MAX_CAR_NUMBER)
+                //zmienic na dopoki kolejka ma symbole
+                if (simRoad.getQueueLength() > 0)//CURRENT_CAR_NUMBER < MAX_CAR_NUMBER)
                 {
                     //losuj carPos
                     int temp = 0;
@@ -96,13 +98,13 @@ namespace crossing1
                                 break;
                         }
 
-                        Car newCar = new Car(newCarPos, newCarDir, simRoad.popCharacter(), this, simRoad);
+                        Car newCar = new Car(newCarPos, newCarDir, simRoad.popCharacter(), this, simRoad, godOfRoad);
                         Thread newCarThread = new Thread(new ThreadStart(newCar.ThreadProc));
                         //newCarThread.Name= String.Format("{0}", i);
                         newCarThread.Start();
                         newCar.setThread(newCarThread);
                         cars.Add(newCar);
-                        CURRENT_CAR_NUMBER++;
+                        //CURRENT_CAR_NUMBER++;
                     }
                     simRoad.GetRoadMutex(genX, genY).ReleaseMutex();
                 }
@@ -122,7 +124,7 @@ namespace crossing1
             var menu = new MenuBar(new MenuBarItem[] {
                 new MenuBarItem ("_F9 Menu", new MenuItem [] {
                     new MenuItem ("_Quit", "", () => { top.Running = false; }),
-                    new MenuItem ("_Stopthreads", "", () => { setPrun(false); }),
+                    new MenuItem ("_StopGeneratingthreads", "", () => { setPrun(false); }),
                 }),
             });
             top.Add(menu);
@@ -168,11 +170,20 @@ namespace crossing1
                     };
                     win.Add(singleCarLabel);
                 }
-
+                int ccNumber = 0;
+                simRoad.getCrossingCarsNumberMutex().WaitOne();
+                ccNumber = simRoad.getCrossingCarsNumber();
+                simRoad.getCrossingCarsNumberMutex().ReleaseMutex();
+                var ccNumberLabel = new Label("crossing cars:" + ccNumber)
+                {
+                    X = 28,
+                    Y = 5
+                };
+                win.Add(ccNumberLabel);
                 //update graphics + generate new cars?
                 return true;
             }
-            Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(200), timer);
+            Application.MainLoop.AddTimeout(TimeSpan.FromMilliseconds(100), timer);
             top.Add(win);
             Application.Run();
         }
