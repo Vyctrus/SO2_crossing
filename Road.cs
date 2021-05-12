@@ -12,14 +12,34 @@ namespace crossing1
         //pola koncowe             // endTop      right    bottom      left
         int[,] endFields = new int[,] { { 13, 1 }, { 23, 13 }, { 12, 23 }, { 1, 12 } };
 
-        //pola intersection
-        //  x1
-        //   A B x2
-        //   x3  C D
+        //intersection fields
+        //    x1
+        //     A B x2
+        // x3  C D
         //        x4
-        public int[,] crossInner = new int[,] { { 12, 12 }, { 13, 12 }, { 12, 13 }, { 13, 13 } };
+        //private const int[,] crossInner = new int[,] { { 12, 12 }, { 13, 12 }, { 12, 13 }, { 13, 13 } };
+        public const int crossInner1X = 12;
+        public const int crossInner1Y = 12;
+        public const int crossInner2X = 13;
+        public const int crossInner2Y = 12;
+        public const int crossInner3X = 12;
+        public const int crossInner3Y = 13;
+        public const int crossInner4X = 13;
+        public const int crossInner4Y = 13;
         //x1,x2,x3,x4
         int[,] crossOuter = new int[,] { { 12, 11 }, { 14, 12 }, { 11, 13 }, { 13, 14 } };
+        public const int crossOuter1X = 12;//A
+        public const int crossOuter1Y = 11;
+
+        public const int crossOuter2X = 14;//B
+        public const int crossOuter2Y = 12;
+
+        public const int crossOuter3X = 11;//C
+        public const int crossOuter3Y = 13;
+
+        public const int crossOuter4X = 13;//D
+        public const int crossOuter4Y = 14;
+
         bool[,] roadSpace = new bool[25, 25];
         Mutex[,] roadSpaceMutex = new Mutex[25, 25];
         //storing car characters/id-s
@@ -216,14 +236,26 @@ namespace crossing1
         {
             for (int i = 0; i < 4; i++)
             {
-                // if (pos_x == crossInner[i, 0] && pos_y == crossInner[i, 1])
-                // {
-                //     return false;
-                // }
-                if (pos_x == crossOuter[i, 0] && pos_y == crossOuter[i, 1])
+                if (pos_x == crossOuter1X && pos_y == crossOuter1Y)
                 {
                     return false;
                 }
+                if (pos_x == crossOuter2X && pos_y == crossOuter2Y)
+                {
+                    return false;
+                }
+                if (pos_x == crossOuter3X && pos_y == crossOuter3Y)
+                {
+                    return false;
+                }
+                if (pos_x == crossOuter4X && pos_y == crossOuter4Y)
+                {
+                    return false;
+                }
+                // if (pos_x == crossOuter[i, 0] && pos_y == crossOuter[i, 1])
+                // {
+                //     return false;
+                // }
             }
             return true;
         }
