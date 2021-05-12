@@ -35,9 +35,7 @@ namespace crossing1
         private int pos_Y = 0;
         private Mutex positionMutex;
         private int speed = 500; //?wspieranie predkosci?
-
-        private int end_pos_X = 30;
-        private int end_pos_Y = 0;
+        private static Random randSpeed = new Random();
 
         private String graphic = "A";
         private CarRotation carRot; // :D
@@ -87,6 +85,7 @@ namespace crossing1
             program = program1;
             road = carRoad;
             roadGod = godOfRoad;
+            speed = randSpeed.Next(100, 500);
             switch (carDirection)
             {
                 case CarDirection.FORWARD:
@@ -145,14 +144,11 @@ namespace crossing1
             //pozniej zalezne od kierunku
             graphic = carGraphic;
             positionMutex = new Mutex();
-            //
             lockPosition();
-            //carPos = CarPos.TOP;
             pos_X = road.getStartPointX(carPos);
             pos_Y = road.getStartPointY(carPos);
 
             unlockPosition();
-            //ustawienie poczatkowej rotacji
             switch (carPos)
             {
                 case CarPos.TOP:
@@ -168,8 +164,6 @@ namespace crossing1
                     carRot = CarRotation.RIGHT;
                     break;
             }
-            //test
-            //carRot = CarRotation.DOWN;
         }
         public bool checkIfCarExists()
         {
@@ -184,14 +178,6 @@ namespace crossing1
             while (program.getPrun())
             {
                 Thread.Sleep(speed);
-                // if (checkIfEnd())
-                // {
-                //     //uwolnij pozycje
-                //     carExistsMutex.WaitOne();
-                //     carExists = false;
-                //     carExistsMutex.ReleaseMutex();
-                //     break;
-                // }
                 lockPosition();
                 bool temp = tryToMove();
                 unlockPosition();
@@ -203,25 +189,12 @@ namespace crossing1
                     break;
                 }
             }
-
-        }
-        public bool checkIfEnd()
-        {
-            bool returnVal = false;
-            lockPosition();
-            if (pos_X == end_pos_X && pos_Y == end_pos_Y)
-            {
-                returnVal = true;
-            }
-            unlockPosition();
-            return returnVal;
         }
 
-        //jak zawracaja? w oparciu o miejsce gdzie są?
+
+        //jak zawracaja: w oparciu o miejsce gdzie są i w oparciu o swoje destination 
         //licz nową pozycja w zależnośći od tego gdzie auto jedzie
         //po dotarciu do skrzyrzowania na kazdym polu sprawdz kierunek
-        //ustaw carRotationw oparciu o kierunek, w oparciu o rotation
-        //wykonuj ruchy
         //po wykonaniu ruchu update pozycji next_pos
         void step()
         {
@@ -299,28 +272,23 @@ namespace crossing1
         }
         bool tryToMove()
         {
+            //sprawdz czy auto wyjechalo poza obszar wtedy return false
             if (pos_X >= 24 || pos_Y >= 24 || pos_X <= 0 || pos_Y <= 0)
             {
                 road.GetRoadMutex(pos_X, pos_Y).WaitOne();
                 road.setSpaceFree(pos_X, pos_Y);
                 road.GetRoadMutex(pos_X, pos_Y).ReleaseMutex();
                 return false;
-                //sprawdz czy auto wyjechalo poza obszar wtedy return false
-                //obroc auto jeśli jest na skrzyżowaniu w oparciu o destination
             }
             //wykonaj ruch jeżeli możesz
-            //canmove - jeżeli wolna przestrzeń i nie obsługujesz skrzyżowania
             if (road.straightRoad(pos_X, pos_Y))
             {
                 singleMove();
             }
             else
             {   //crossing rules
-                // if (road.crossingEntrance(pos_X, pos_Y)) domyslnie obsluga tylko wejsc
                 roadGod.Wait();//roadGod is listening one car at time
-
                 int ccNumber = 0;
-
                 road.GetRoadMutex(12, 12).WaitOne();
                 if (!road.checkSpace(12, 12))
                 {
@@ -362,7 +330,6 @@ namespace crossing1
                     bool carCanGo = road.skipIfBlank(pos_X, pos_Y);
                     if (carCanGo)
                     {
-                        //go
                         singleMove();
                         // road.getCrossingCarsNumberMutex().WaitOne();
                         // road.incCrossingCarsNumber();
@@ -373,15 +340,6 @@ namespace crossing1
                 roadGod.Release();
 
             }
-            // if (pos_X >= 24 || pos_Y >= 24 || pos_X <= 0 || pos_X <= 0)
-            // {
-            //     road.GetRoadMutex(pos_X, pos_Y).WaitOne();
-            //     road.setSpaceFree(pos_X, pos_Y);
-            //     road.GetRoadMutex(pos_X, pos_Y).ReleaseMutex();
-            //     return false;
-            //     //sprawdz czy auto wyjechalo poza obszar wtedy return false
-            //     //obroc auto jeśli jest na skrzyżowaniu w oparciu o destination
-            // }
 
             switch (carDestination)
             {
@@ -460,8 +418,6 @@ namespace crossing1
                     break;
             }
             return true;
-
         }
-
     }
 }

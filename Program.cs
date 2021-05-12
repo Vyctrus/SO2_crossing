@@ -44,7 +44,7 @@ namespace crossing1
         {
             int MAX_CAR_NUMBER = simRoad.getMAX_CAR_NUMBER();
             //int CURRENT_CAR_NUMBER = 0;
-            int frequency = 1000;
+            int frequency = 200;
             int genX = 0;
             int genY = 0;
             CarPos newCarPos = CarPos.TOP;
