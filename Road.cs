@@ -42,6 +42,10 @@ namespace crossing1
 
         bool[,] roadSpace = new bool[25, 25];
         Mutex[,] roadSpaceMutex = new Mutex[25, 25];
+
+        bool[] onlyOne = new bool[4];
+        Mutex[] onlyOneMutex = new Mutex[4];
+
         //storing car characters/id-s
         Queue<string> characters = new Queue<string>();
         Mutex charactersMutex = new Mutex();
@@ -60,6 +64,8 @@ namespace crossing1
             for (int i = 0; i < 4; i++)
             {
                 hungryArray[i] = i;
+                onlyOneMutex[i] = new Mutex();
+                onlyOne[i] = true;
             }
             for (int i = 0; i < 25; i++)
             {
@@ -72,6 +78,20 @@ namespace crossing1
                 }
             }
             loadCarCharacters();
+        }
+
+
+        public Mutex getOnlyOneMutex(int fieldId)
+        {
+            return onlyOneMutex[fieldId];
+        }
+        public bool getOnlyOne(int fieldId)
+        {
+            return onlyOne[fieldId];
+        }
+        public void setOnlyOne(int fieldId, bool value)
+        {
+            onlyOne[fieldId] = value;
         }
 
         public bool skipIfBlank(int posX, int posY)

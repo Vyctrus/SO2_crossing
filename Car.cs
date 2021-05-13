@@ -33,13 +33,15 @@ namespace crossing1
         private Mutex carExistsMutex = new Mutex();
         private int pos_X = 0;
         private int pos_Y = 0;
+        private int posOrigin_X = 0;
+        private int posOrigin_Y = 0;
         private Mutex positionMutex;
         private int speed = 500; //?wspieranie predkosci?
         private static Random randSpeed = new Random();
 
         private String graphic = "A";
         private CarRotation carRot; // :D
-        //private CarDirection carDir;
+        private CarDirection carDir;
         private CarPos carDestination;
 
         //pozycja którą chce następnie zająć auto
@@ -51,6 +53,53 @@ namespace crossing1
         crossing1.Program program;
         crossing1.Road road;
         SemaphoreSlim roadGod;
+
+        private int rightPosX = 999;
+        private int rightPosY = 999;
+        private int crossingPos = 999;
+
+        //i dont wanna to use road in retriving constants
+        public const int crossOuter1X = 12;//A
+        public const int crossOuter1Y = 11;
+
+        public const int crossOuter2X = 14;//B
+        public const int crossOuter2Y = 12;
+
+        public const int crossOuter3X = 11;//C
+        public const int crossOuter3Y = 13;
+
+        public const int crossOuter4X = 13;//D
+        public const int crossOuter4Y = 14;
+        private const bool hierarchy = true;
+
+        private bool roadWithoutPrio()
+        {
+            if (hierarchy)
+            {
+                //A has prio top
+                if (pos_X == crossOuter1X && pos_Y == crossOuter1Y)
+                {
+                    return false;
+                }
+                //B right
+                if (pos_X == crossOuter2X && pos_Y == crossOuter2Y)
+                {
+                    return true;
+                }
+                //C left
+                if (pos_X == crossOuter3X && pos_Y == crossOuter3Y)
+                {
+                    return true;
+                }
+                //D bottom
+                if (pos_X == crossOuter4X && pos_Y == crossOuter4Y)
+                {
+                    return true;
+                }
+            }
+            return true;
+        }
+
         public void setThread(Thread passed)
         {
             threadAction = passed;
@@ -86,6 +135,7 @@ namespace crossing1
             road = carRoad;
             roadGod = godOfRoad;
             speed = randSpeed.Next(100, 500);
+            carDir = carDirection;
             switch (carDirection)
             {
                 case CarDirection.FORWARD:
@@ -147,7 +197,8 @@ namespace crossing1
             lockPosition();
             pos_X = road.getStartPointX(carPos);
             pos_Y = road.getStartPointY(carPos);
-
+            posOrigin_X = pos_X;
+            posOrigin_Y = pos_Y;
             unlockPosition();
             switch (carPos)
             {
@@ -218,7 +269,34 @@ namespace crossing1
                     break;
             }
         }
-        void singleMove()
+        void unlockYourLane(Road road)
+        {
+            if (posOrigin_X == 12 && posOrigin_Y == 1)
+            {//top
+                road.getOnlyOneMutex(0).WaitOne();
+                road.setOnlyOne(0, true);
+                road.getOnlyOneMutex(0).ReleaseMutex();
+            }
+            if (posOrigin_X == 23 && posOrigin_Y == 12)
+            {//right
+                road.getOnlyOneMutex(1).WaitOne();
+                road.setOnlyOne(1, true);
+                road.getOnlyOneMutex(1).ReleaseMutex();
+            }
+            if (posOrigin_X == 13 && posOrigin_Y == 23)
+            {//bottom
+                road.getOnlyOneMutex(3).WaitOne();
+                road.setOnlyOne(3, true);
+                road.getOnlyOneMutex(3).ReleaseMutex();
+            }
+            if (posOrigin_X == 1 && posOrigin_Y == 13)
+            {//left
+                road.getOnlyOneMutex(2).WaitOne();
+                road.setOnlyOne(2, true);
+                road.getOnlyOneMutex(2).ReleaseMutex();
+            }
+        }
+        bool singleMove()
         {
             step();
             road.GetRoadMutex(next_pos_X, next_pos_Y).WaitOne();
@@ -244,31 +322,26 @@ namespace crossing1
                 road.GetRoadMutex(old_pos_X, old_pos_Y).WaitOne();
                 road.setSpaceFree(old_pos_X, old_pos_Y);
                 road.GetRoadMutex(old_pos_X, old_pos_Y).ReleaseMutex();
-                // if (pos_X == 13 && pos_Y == 11)
-                // {
-                //     road.getCrossingCarsNumberMutex().WaitOne();
-                //     road.decCrossingCarsNumber();
-                //     road.getCrossingCarsNumberMutex().ReleaseMutex();
-                // }
-                // if (pos_X == 14 && pos_Y == 13)
-                // {
-                //     road.getCrossingCarsNumberMutex().WaitOne();
-                //     road.decCrossingCarsNumber();
-                //     road.getCrossingCarsNumberMutex().ReleaseMutex();
-                // }
-                // if (pos_X == 11 && pos_Y == 12)
-                // {
-                //     road.getCrossingCarsNumberMutex().WaitOne();
-                //     road.decCrossingCarsNumber();
-                //     road.getCrossingCarsNumberMutex().ReleaseMutex();
-                // }
-                // if (pos_X == 12 && pos_Y == 14)
-                // {
-                //     road.getCrossingCarsNumberMutex().WaitOne();
-                //     road.decCrossingCarsNumber();
-                //     road.getCrossingCarsNumberMutex().ReleaseMutex();
-                // }
+                if (pos_X == 13 && pos_Y == 11)
+                {
+                    unlockYourLane(road);
+                }
+                if (pos_X == 14 && pos_Y == 13)
+                {
+                    unlockYourLane(road);
+                }
+                if (pos_X == 11 && pos_Y == 12)
+                {
+                    unlockYourLane(road);
+                }
+                if (pos_X == 12 && pos_Y == 14)
+                {
+                    unlockYourLane(road);
+                }
+                return true;
+
             }
+            return false;
         }
 
         void correctRotation(int pos_X, int pos_Y, CarPos carDestination)
@@ -361,6 +434,7 @@ namespace crossing1
             }
             return false;
         }
+
         bool tryToMove()
         {
             if (endOfRoad(pos_X, pos_Y, road))
@@ -375,62 +449,187 @@ namespace crossing1
             }
             else
             {   //crossing rules
-                roadGod.Wait();//roadGod is listening one car at time
-                int ccNumber = 0;
-                road.GetRoadMutex(12, 12).WaitOne();
-                if (!road.checkSpace(12, 12))
-                {
-                    ccNumber++;
-                }
-                road.GetRoadMutex(12, 12).ReleaseMutex();
+                roadGod.Wait();
+                getRightCarPositions(pos_X, pos_Y);
 
-                road.GetRoadMutex(13, 12).WaitOne();
-                if (!road.checkSpace(13, 12))
-                {
-                    ccNumber++;
-                }
-                road.GetRoadMutex(13, 12).ReleaseMutex();
+                bool lanePassPermission = false;
+                road.getOnlyOneMutex(crossingPos).WaitOne();
+                lanePassPermission = road.getOnlyOne(crossingPos);
+                road.getOnlyOneMutex(crossingPos).ReleaseMutex();
 
-                road.GetRoadMutex(12, 13).WaitOne();
-                if (!road.checkSpace(12, 13))
+                if (lanePassPermission)
                 {
-                    ccNumber++;
-                }
-                road.GetRoadMutex(12, 13).ReleaseMutex();
-
-                road.GetRoadMutex(13, 13).WaitOne();
-                if (!road.checkSpace(13, 13))
-                {
-                    ccNumber++;
-                }
-                road.GetRoadMutex(13, 13).ReleaseMutex();
-
-                road.getCrossingCarsNumberMutex().WaitOne();
-                road.setCrossingCarsNumber(ccNumber);
-                road.getCrossingCarsNumberMutex().ReleaseMutex();
-
-                if (ccNumber < 3)
-                {
-                    //możesz probowac wpuscic auto
-                    //zdefiniuj pole jest puste: road.CheckSpace()==true
-                    //sprawdzaj po kolejnych crossOuter
-                    //skip queue until car exists
-                    bool carCanGo = road.skipIfBlank(pos_X, pos_Y);
-                    if (carCanGo)
+                    if (carDir == CarDirection.TURN_RIGHT)
                     {
-                        singleMove();
-                        // road.getCrossingCarsNumberMutex().WaitOne();
-                        // road.incCrossingCarsNumber();
-                        // road.getCrossingCarsNumberMutex().ReleaseMutex();
+                        //singleMove();
+                        if (singleMove())
+                        {
+                            road.getOnlyOneMutex(crossingPos).WaitOne();
+                            lanePassPermission = road.getOnlyOne(crossingPos);
+                            road.setOnlyOne(crossingPos, false);
+                            road.getOnlyOneMutex(crossingPos).ReleaseMutex();
+                        }
+                        //..^-..ZABLOKUJ PAS
+                    }
+                    else
+                    {
+                        //otworz mutex sasiada i zamknij go dopiero po rozpatrzeniu calej skewencji ruchu
+                        //    road.GetRoadMutex(rightPosX, rightPosY).WaitOne();
+                        //
+                        road.GetRoadMutex(12, 12).WaitOne();
+                        road.GetRoadMutex(13, 12).WaitOne();
+                        road.GetRoadMutex(12, 13).WaitOne();
+                        road.GetRoadMutex(13, 13).WaitOne();
+                        if ((!road.checkSpace(rightPosX, rightPosY)) && roadWithoutPrio())
+                        {
+                            //warunek- jeśli po twojej prawej jest false, to znaczy ze ktos tam stoi
+                            //hierarchia zasobów- zignoruj to że ktoś stoi bo pas na którym jesteś ma pierwszeństwo
+
+                            //wait for your turn
+                        }
+                        else
+                        {
+                            //youCanTryDrive();
+                            int ccNumber = 0;
+                            if (!road.checkSpace(12, 12))
+                            {
+                                ccNumber++;
+                            }
+                            if (!road.checkSpace(13, 12))
+                            {
+                                ccNumber++;
+                            }
+                            if (!road.checkSpace(12, 13))
+                            {
+                                ccNumber++;
+                            }
+                            if (!road.checkSpace(13, 13))
+                            {
+                                ccNumber++;
+                            }
+
+                            //!!!!!!!!!...w tym miejscu trzeba trzymac zalokowany mutex drogi na którą się wybiera nasz auto
+                            //puszczamy dopiero po skonczeniu ruchu auta
+                            if (ccNumber >= 3)
+                            {
+                                //u cant drive
+                            }
+                            else
+                            {
+                                //u can drive
+                                singleMove();
+                            }
+                        }
+                        road.GetRoadMutex(13, 13).ReleaseMutex();
+                        road.GetRoadMutex(12, 13).ReleaseMutex();
+                        road.GetRoadMutex(13, 12).ReleaseMutex();
+                        road.GetRoadMutex(12, 12).ReleaseMutex();
+                        //roadGod.Release();
                     }
                 }
-                //road.getCrossingCarsNumberMutex().ReleaseMutex();
-                roadGod.Release();
+                else
+                {
+                    //wait for your turn
+                }
 
+
+                if (false)
+                {//rodGod version
+                 //old code
+                    roadGod.Wait();//roadGod is listening one car at time
+                    int ccNumber = 0;
+                    road.GetRoadMutex(12, 12).WaitOne();
+                    if (!road.checkSpace(12, 12))
+                    {
+                        ccNumber++;
+                    }
+                    road.GetRoadMutex(12, 12).ReleaseMutex();
+
+                    road.GetRoadMutex(13, 12).WaitOne();
+                    if (!road.checkSpace(13, 12))
+                    {
+                        ccNumber++;
+                    }
+                    road.GetRoadMutex(13, 12).ReleaseMutex();
+
+                    road.GetRoadMutex(12, 13).WaitOne();
+                    if (!road.checkSpace(12, 13))
+                    {
+                        ccNumber++;
+                    }
+                    road.GetRoadMutex(12, 13).ReleaseMutex();
+
+                    road.GetRoadMutex(13, 13).WaitOne();
+                    if (!road.checkSpace(13, 13))
+                    {
+                        ccNumber++;
+                    }
+                    road.GetRoadMutex(13, 13).ReleaseMutex();
+
+                    road.getCrossingCarsNumberMutex().WaitOne();
+                    road.setCrossingCarsNumber(ccNumber);
+                    road.getCrossingCarsNumberMutex().ReleaseMutex();
+
+                    if (ccNumber < 3)
+                    {
+                        //możesz probowac wpuscic auto
+                        //zdefiniuj pole jest puste: road.CheckSpace()==true
+                        //sprawdzaj po kolejnych crossOuter
+                        //skip queue until car exists
+                        bool carCanGo = road.skipIfBlank(pos_X, pos_Y);
+                        if (carCanGo)
+                        {
+                            singleMove();
+                            // road.getCrossingCarsNumberMutex().WaitOne();
+                            // road.incCrossingCarsNumber();
+                            // road.getCrossingCarsNumberMutex().ReleaseMutex();
+                        }
+                    }
+                    road.getCrossingCarsNumberMutex().ReleaseMutex();
+                    //roadGod.Release();
+                }
+
+                roadGod.Release();
             }
             //car after trying to move
             correctRotation(pos_X, pos_Y, carDestination);
             return true;
+        }
+        void getRightCarPositions(int pos_X, int pos_Y)
+        {
+            //  A
+            //  X X B
+            //C X X 
+            //    D
+            //A
+            if (pos_X == crossOuter1X && pos_Y == crossOuter1Y)
+            {
+                rightPosX = crossOuter3X;//C
+                rightPosY = crossOuter3Y;
+                crossingPos = 0;
+            }
+            //B
+            if (pos_X == crossOuter2X && pos_Y == crossOuter2Y)
+            {
+                rightPosX = crossOuter1X;//A
+                rightPosY = crossOuter1Y;
+                crossingPos = 1;
+            }
+            //C
+            if (pos_X == crossOuter3X && pos_Y == crossOuter3Y)
+            {
+                rightPosX = crossOuter4X;
+                rightPosY = crossOuter4Y;
+                crossingPos = 2;
+            }
+            //D
+            if (pos_X == crossOuter4X && pos_Y == crossOuter4Y)
+            {
+                rightPosX = crossOuter2X;
+                rightPosY = crossOuter2Y;
+                crossingPos = 3;
+            }
+
         }
     }
 }
