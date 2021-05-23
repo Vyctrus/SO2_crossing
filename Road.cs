@@ -150,10 +150,10 @@ namespace crossing1
         {
             crossingCarsNumber = vlaue;
         }
-        // public void incCrossingCarsNumber()
-        // {
-        //     crossingCarsNumber++;
-        // }
+        public void incCrossingCarsNumber()
+        {
+            crossingCarsNumber++;
+        }
         // public void decCrossingCarsNumber()
         // {
         //     crossingCarsNumber--;

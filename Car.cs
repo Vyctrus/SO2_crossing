@@ -1,5 +1,6 @@
 using System;
 using System.Threading;
+using Terminal.Gui;
 using crossing1;
 
 namespace crossing1
@@ -40,6 +41,7 @@ namespace crossing1
         private static Random randSpeed = new Random();
 
         private String graphic = "A";
+        private Terminal.Gui.Attribute carColor;//= new Terminal.Gui.Attribute(Color.BrightGreen, Color.Black);
         private CarRotation carRot; // :D
         private CarDirection carDir;
         private CarPos carDestination;
@@ -100,6 +102,19 @@ namespace crossing1
             return true;
         }
 
+        private bool getCarDecision()
+        {
+            if (randSpeed.Next(100) < randSpeed.Next(10, 70))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public Terminal.Gui.Attribute getCarColor()
+        {
+            return carColor;
+        }
         public void setThread(Thread passed)
         {
             threadAction = passed;
@@ -191,6 +206,21 @@ namespace crossing1
                     break;
             }
 
+            switch (carDestination)
+            {
+                case CarPos.TOP:
+                    carColor = new Terminal.Gui.Attribute(Color.BrightGreen, Color.Black);
+                    break;
+                case CarPos.RIGHT:
+                    carColor = new Terminal.Gui.Attribute(Color.BrightYellow, Color.Black);
+                    break;
+                case CarPos.BOTTOM:
+                    carColor = new Terminal.Gui.Attribute(Color.BrightRed, Color.Black);
+                    break;
+                case CarPos.LEFT:
+                    carColor = new Terminal.Gui.Attribute(Color.BrightBlue, Color.Black);
+                    break;
+            }
             //pozniej zalezne od kierunku
             graphic = carGraphic;
             positionMutex = new Mutex();
@@ -480,6 +510,39 @@ namespace crossing1
                         road.GetRoadMutex(13, 12).WaitOne();
                         road.GetRoadMutex(12, 13).WaitOne();
                         road.GetRoadMutex(13, 13).WaitOne();
+
+                        //kolizje hipotetyczne
+                        if (!roadWithoutPrio())
+                        {
+                            //przy wykrywaniu kolizji powinien byc tryb z tylko jedna droga pierwszenstwa
+                            //dwie dorgi z pierwszeństwem poskutkowałyby podwójnym losowaniem czy zaszła kolizja
+                            int ccNumber2 = 0;
+                            if (!road.checkSpace(12, 12) || getCarDecision())
+                            {
+                                ccNumber2++;
+                            }
+                            if (!road.checkSpace(13, 12) || getCarDecision())
+                            {
+                                ccNumber2++;
+                            }
+                            if (!road.checkSpace(12, 13) || getCarDecision())
+                            {
+                                ccNumber2++;
+                            }
+                            if (!road.checkSpace(13, 13) || getCarDecision())
+                            {
+                                ccNumber2++;
+                            }
+                            if (ccNumber2 == 4)
+                            {
+                                road.getCrossingCarsNumberMutex().WaitOne();//bad name but already existed
+                                road.incCrossingCarsNumber();
+                                road.getCrossingCarsNumberMutex().ReleaseMutex();
+                            }
+                            //co z przypadkiem keidy choc jedno auto skreca w prawo?
+                            //komu to sprawdzac- wszelkim autom na skrzyżowaniu?
+                        }
+
                         if ((!road.checkSpace(rightPosX, rightPosY)) && roadWithoutPrio())
                         {
                             //warunek- jeśli po twojej prawej jest false, to znaczy ze ktos tam stoi

@@ -166,15 +166,20 @@ namespace crossing1
                     var singleCarLabel = new Label(singleCar.getGraphic())
                     {
                         X = singleCar.getPosX(),
-                        Y = singleCar.getPosY()
+                        Y = singleCar.getPosY(),
+                        ColorScheme = new ColorScheme()
+                        {
+                            Normal = singleCar.getCarColor()
+                        },
                     };
                     win.Add(singleCarLabel);
                 }
+
                 int ccNumber = 0;
                 simRoad.getCrossingCarsNumberMutex().WaitOne();
                 ccNumber = simRoad.getCrossingCarsNumber();
                 simRoad.getCrossingCarsNumberMutex().ReleaseMutex();
-                var ccNumberLabel = new Label("crossing cars:" + ccNumber)
+                var ccNumberLabel = new Label("Liczba kolizji: " + ccNumber)
                 {
                     X = 28,
                     Y = 5
