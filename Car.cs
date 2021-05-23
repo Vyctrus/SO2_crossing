@@ -511,37 +511,7 @@ namespace crossing1
                         road.GetRoadMutex(12, 13).WaitOne();
                         road.GetRoadMutex(13, 13).WaitOne();
 
-                        //kolizje hipotetyczne
-                        if (!roadWithoutPrio())
-                        {
-                            //przy wykrywaniu kolizji powinien byc tryb z tylko jedna droga pierwszenstwa
-                            //dwie dorgi z pierwszeństwem poskutkowałyby podwójnym losowaniem czy zaszła kolizja
-                            int ccNumber2 = 0;
-                            if (!road.checkSpace(12, 12) || getCarDecision())
-                            {
-                                ccNumber2++;
-                            }
-                            if (!road.checkSpace(13, 12) || getCarDecision())
-                            {
-                                ccNumber2++;
-                            }
-                            if (!road.checkSpace(12, 13) || getCarDecision())
-                            {
-                                ccNumber2++;
-                            }
-                            if (!road.checkSpace(13, 13) || getCarDecision())
-                            {
-                                ccNumber2++;
-                            }
-                            if (ccNumber2 == 4)
-                            {
-                                road.getCrossingCarsNumberMutex().WaitOne();//bad name but already existed
-                                road.incCrossingCarsNumber();
-                                road.getCrossingCarsNumberMutex().ReleaseMutex();
-                            }
-                            //co z przypadkiem keidy choc jedno auto skreca w prawo?
-                            //komu to sprawdzac- wszelkim autom na skrzyżowaniu?
-                        }
+
 
                         if ((!road.checkSpace(rightPosX, rightPosY)) && roadWithoutPrio())
                         {
@@ -579,6 +549,37 @@ namespace crossing1
                             }
                             else
                             {
+                                //kolizje hipotetyczne
+                                if (!roadWithoutPrio())
+                                {
+                                    //przy wykrywaniu kolizji powinien byc tryb z tylko jedna droga pierwszenstwa
+                                    //dwie dorgi z pierwszeństwem poskutkowałyby podwójnym losowaniem czy zaszła kolizja
+                                    int ccNumber2 = 0;
+                                    if (!road.checkSpace(12, 12) || getCarDecision())
+                                    {
+                                        ccNumber2++;
+                                    }
+                                    if (!road.checkSpace(13, 12) || getCarDecision())
+                                    {
+                                        ccNumber2++;
+                                    }
+                                    if (!road.checkSpace(12, 13) || getCarDecision())
+                                    {
+                                        ccNumber2++;
+                                    }
+                                    if (!road.checkSpace(13, 13) || getCarDecision())
+                                    {
+                                        ccNumber2++;
+                                    }
+                                    if (ccNumber2 == 4)
+                                    {
+                                        road.getCrossingCarsNumberMutex().WaitOne();//bad name but already existed
+                                        road.incCrossingCarsNumber();
+                                        road.getCrossingCarsNumberMutex().ReleaseMutex();
+                                    }
+                                    //co z przypadkiem keidy choc jedno auto skreca w prawo?
+                                    //komu to sprawdzac- wszelkim autom na skrzyżowaniu?
+                                }
                                 //u can drive
                                 singleMove();
                             }
