@@ -139,7 +139,7 @@ namespace crossing1
             //     Y = myCar.getPosY()
             // };
             //win.Add(testLabel);
-
+            DateTime start = DateTime.Now;
             //Main loop, update data here
             bool timer(MainLoop caller)
             {
@@ -185,6 +185,14 @@ namespace crossing1
                     Y = 5
                 };
                 win.Add(ccNumberLabel);
+                DateTime end = DateTime.Now;
+                TimeSpan ts = (end - start);
+                var timeLabel = new Label("Czas symulacji: " + ts.Seconds + "s")
+                {
+                    X = 28,
+                    Y = 7
+                };
+                win.Add(timeLabel);
                 //update graphics + generate new cars?
                 return true;
             }
