@@ -596,63 +596,6 @@ namespace crossing1
                     //wait for your turn
                 }
 
-
-                if (false)
-                {//rodGod version
-                 //old code
-                    roadGod.Wait();//roadGod is listening one car at time
-                    int ccNumber = 0;
-                    road.GetRoadMutex(12, 12).WaitOne();
-                    if (!road.checkSpace(12, 12))
-                    {
-                        ccNumber++;
-                    }
-                    road.GetRoadMutex(12, 12).ReleaseMutex();
-
-                    road.GetRoadMutex(13, 12).WaitOne();
-                    if (!road.checkSpace(13, 12))
-                    {
-                        ccNumber++;
-                    }
-                    road.GetRoadMutex(13, 12).ReleaseMutex();
-
-                    road.GetRoadMutex(12, 13).WaitOne();
-                    if (!road.checkSpace(12, 13))
-                    {
-                        ccNumber++;
-                    }
-                    road.GetRoadMutex(12, 13).ReleaseMutex();
-
-                    road.GetRoadMutex(13, 13).WaitOne();
-                    if (!road.checkSpace(13, 13))
-                    {
-                        ccNumber++;
-                    }
-                    road.GetRoadMutex(13, 13).ReleaseMutex();
-
-                    road.getCrossingCarsNumberMutex().WaitOne();
-                    road.setCrossingCarsNumber(ccNumber);
-                    road.getCrossingCarsNumberMutex().ReleaseMutex();
-
-                    if (ccNumber < 3)
-                    {
-                        //możesz probowac wpuscic auto
-                        //zdefiniuj pole jest puste: road.CheckSpace()==true
-                        //sprawdzaj po kolejnych crossOuter
-                        //skip queue until car exists
-                        bool carCanGo = road.skipIfBlank(pos_X, pos_Y);
-                        if (carCanGo)
-                        {
-                            singleMove();
-                            // road.getCrossingCarsNumberMutex().WaitOne();
-                            // road.incCrossingCarsNumber();
-                            // road.getCrossingCarsNumberMutex().ReleaseMutex();
-                        }
-                    }
-                    road.getCrossingCarsNumberMutex().ReleaseMutex();
-                    //roadGod.Release();
-                }
-
                 roadGod.Release();
             }
             //car after trying to move

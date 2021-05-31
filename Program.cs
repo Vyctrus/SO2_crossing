@@ -124,7 +124,7 @@ namespace crossing1
             var menu = new MenuBar(new MenuBarItem[] {
                 new MenuBarItem ("_F9 Menu", new MenuItem [] {
                     new MenuItem ("_Quit", "", () => { top.Running = false; }),
-                    new MenuItem ("_StopGeneratingthreads", "", () => { setPrun(false); }),
+                    new MenuItem ("_StopCars", "", () => { setPrun(false); }),
                 }),
             });
             top.Add(menu);
@@ -175,6 +175,7 @@ namespace crossing1
                     win.Add(singleCarLabel);
                 }
 
+                //nieodpowiednie nazwy zmiennych, odpowiednie dzialanie
                 int ccNumber = 0;
                 simRoad.getCrossingCarsNumberMutex().WaitOne();
                 ccNumber = simRoad.getCrossingCarsNumber();
@@ -184,10 +185,11 @@ namespace crossing1
                     X = 28,
                     Y = 5
                 };
+
                 win.Add(ccNumberLabel);
                 DateTime end = DateTime.Now;
                 TimeSpan ts = (end - start);
-                var timeLabel = new Label("Czas symulacji: " + ts.Seconds + "s")
+                var timeLabel = new Label("Czas symulacji: " + ts.Duration().TotalSeconds + "[s]")//+ " : "+ ts.Seconds
                 {
                     X = 28,
                     Y = 7
